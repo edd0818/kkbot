@@ -3,6 +3,10 @@
 proc go { direct steps} {
     while {$steps > 0 } {
         expect {
+            "你的動作還沒有完成, 不能移動" {
+                sleep 3
+                exp_continue
+            }
             ">"
             {
                 puts "going to \[$direct]"
@@ -41,25 +45,40 @@ proc lookfor { target } {
     }
 }
 proc isDead { target } {
-    puts "is $target dead?"
+    puts "is \[$target] dead?"
+    sleep 1
     send "l corpse\r"
     expect {
         "*$target)的屍體" {
             puts "\[$target] is dead."
             return 1
         }
-        default {
-             puts "\[$target] is alive."
+        "你要看什麼" {
+            puts "\[$target] is alive."
             return 0
         }
-    }
-    sleep 1
-        
+        default {
+            puts "\[$target] is alive."
+            return 0
+        }
+    }       
 }
+
+proc prepareToFight {} {
+    set hp [getHP]
+    set mp [getMP]
+
+    if {$hp < 90 && $mp > 90} {
+        puts "Get heal for fighting."
+        cast "ch"
+    }
+}
+
 proc kill { target count } {
     set min_hp_limit 50
-    set max_hp_limit 80
-    set heal_hp_limit 75
+    set max_hp_limit 85
+    #戰鬥中補血底線
+    set heal_hp_limit 80
 
     while {$count > 0 } {
         set hasTarget [lookfor "$target"]
@@ -68,33 +87,40 @@ proc kill { target count } {
             set canFight [isHealthy $min_hp_limit]
 
             if {$canFight} {
+                prepareToFight
+
                 puts "killing \[$target]."
                 expect {
                     ">" {
-                        send "k $target\r"
+                        sleep 1
+                        send "kill $target\r"
+                        expect {
+                            "你喝道 :「可惡的" {
+                                set isTargetDead [isDead "$target"]
+                                while { !$isTargetDead } {
 
-                        set isTargetDead [isDead "$target"]
-                        while { !$isTargetDead } {
+                                    set isTargetDead [isDead "$target"]
 
-                            set isTargetDead [isDead "$target"]
+                                    if { $isTargetDead } {
+                                        sleep 1
+                                        puts "Get all from corpse."
+                                        send "gc\r"
+                                        expect ">"
+                                        send "pa\r"
+                                        set count [expr $count-1]
+                                    } else {
+                                        # 戰鬥中補血
+                                        set needHeal [expr ![isHealthy $heal_hp_limit] ]
 
-                            if { $isTargetDead } {
-                                sleep 1
-                                puts "Get all from corpse."
-                                send "gc\r"
-                                expect ">"
-                                send "pa\r"
-                                set count [expr $count-1]
-                            } else {
-                                # 戰鬥中補血
-                                set needHeal [expr ![isHealthy $heal_hp_limit] ]
-
-                                if {$needHeal} {
-                                    cast "ch"
+                                        if {$needHeal} {
+                                            cast "ch"
+                                        }
+                                    }
+                                    
                                 }
                             }
-                            
                         }
+                        
                     }
                 }
                 
@@ -111,7 +137,7 @@ proc kill { target count } {
 proc isHealthy { min_hp_limit } {
     set hp [getHP]
     if {$hp < $min_hp_limit} {
-        puts "HP is lower than $min_hp_limit%."
+        puts "HP is lower than \[$min_hp_limit%]."
         return 0   
     } else {
         puts "I'm healthy."
@@ -126,7 +152,7 @@ proc rest {max_hp_limit } {
         set hp [getHP]
         sleep 1
         cast "ch"
-        puts "Resting, HP: $hp%."
+        puts "Resting, HP: \[$hp%]."
         sleep 10
     }
 }
@@ -159,31 +185,31 @@ proc getMP {} {
 }
 
 proc cast { magic {interval 2} } {
-    set limit 15
-    set mp [getMP]
-    if {$mp > $limit} {
-        puts "Casting \[$magic]"
-        send "$magic\r"
-
-        expect {
-            "法力不足" {
-                return 1
-            }
-            "沒有聽見你的祈願" {
-                return 2
-            }
-            "不理你" {
-                return 2
-            }
-            "動作沒有完成" {
-                return 2
-            }
-            default {
-                return 0
-            }
+    puts "Casting \[$magic]"
+    send "$magic\r"
+    sleep $interval
+    expect {
+        "法力不足" {
+            puts "Failed to cast \[$magic], Out of mana."
+            return 1
         }
-        sleep $interval
+        "沒有聽見你的祈願" {
+            return 2
+        }
+        "不理你" {
+            return 2
+        }
+        "什麼事也沒發生" {
+            return 2
+        }
+        "動作沒有完成" {
+            return 2
+        }
+        default {
+            return 0
+        }
     }
+    
 }
 
 proc keepCast { magic } {
@@ -196,15 +222,22 @@ proc keepCast { magic } {
 
 proc  buffAll {} {
     set buffs {"cst" "csk" "cbl"}
-
     expect {
         ">" { 
             foreach buff $buffs {
-                puts "Casting buff \[$buff]"
+                puts "Praying buff \[$buff]"
                 keepCast $buff
                 puts "\[$buff] buffed"
             }
         }
+    }
+}
+
+proc sellAll {} {
+    expect ">" {
+        sleep 1
+        send "sell all\r"
+        puts "Inventory has been sold."
     }
 }
 
@@ -228,7 +261,7 @@ while {1} {
     sleep 5
 
     go "n" 1
-    # No casting in Advanturer Home 
+    # No MAGIC in Advanturer Home 
     buffAll
     go "e" 3
     kill "monk" 1
@@ -239,16 +272,20 @@ while {1} {
     kill "adventurer" 1
     go "w" 1
     go "s" 4
+    go "e" 1
+    sellAll
+    go "w" 1
     go "s" 2
     go "e" 1
-    go "n" 1
+    go "n" 1   
     kill "Fox" 2
     go "n" 1
     go "e" 1
     kill "Deer" 4
     go "e" 2
     go "n" 2
-    kill "Buffalo" 1
+    buffAll
+    kill "Buffalo" 3
     go "s" 2
     go "w" 3
     go "s" 2
@@ -266,7 +303,8 @@ while {1} {
     go "w" 2
     go "n" 4
     go "w" 1
-    kill "Guard" 1
+    buffAll
+    kill "Guard" 2
     go "w" 1
     go "n" 1
     kill "Frog" 3
