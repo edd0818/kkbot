@@ -49,16 +49,17 @@ proc isDead { target } {
             return 1
         }
         default {
-             puts "\[$target] is not dead."
+             puts "\[$target] is alive."
             return 0
         }
     }
+    sleep 1
         
 }
 proc kill { target count } {
     set min_hp_limit 50
-    set max_hp_limit 75
-    set heal_hp_limit 60
+    set max_hp_limit 80
+    set heal_hp_limit 75
 
     while {$count > 0 } {
         set hasTarget [lookfor "$target"]
@@ -83,19 +84,20 @@ proc kill { target count } {
                                 send "gc\r"
                                 expect ">"
                                 send "pa\r"
+                                set count [expr $count-1]
                             } else {
                                 # 戰鬥中補血
                                 set needHeal [expr ![isHealthy $heal_hp_limit] ]
 
                                 if {$needHeal} {
-                                    cast "cfa"
+                                    cast "ch"
                                 }
                             }
                             
                         }
                     }
                 }
-                set count [expr $count-1]
+                
             } else {
                 rest $max_hp_limit
             }
@@ -123,7 +125,7 @@ proc rest {max_hp_limit } {
     while {$hp < $max_hp_limit} {
         set hp [getHP]
         sleep 1
-        cast "cfa"
+        cast "ch"
         puts "Resting, HP: $hp%."
         sleep 10
     }
@@ -156,19 +158,54 @@ proc getMP {} {
     }
 }
 
-proc cast { magic } {
+proc cast { magic {interval 2} } {
+    set limit 15
+    set mp [getMP]
+    if {$mp > $limit} {
+        puts "Casting \[$magic]"
+        send "$magic\r"
+
+        expect {
+            "法力不足" {
+                return 1
+            }
+            "沒有聽見你的祈願" {
+                return 2
+            }
+            "不理你" {
+                return 2
+            }
+            "動作沒有完成" {
+                return 2
+            }
+            default {
+                return 0
+            }
+        }
+        sleep $interval
+    }
+}
+
+proc keepCast { magic } {
+    #puts "keepCast: $magic"
+    set result [cast $magic]
+    while {$result > 1} {
+        set result [cast $magic]
+    }
+}
+
+proc  buffAll {} {
+    set buffs {"cst" "csk" "cbl"}
+
     expect {
-        ">" {
-            set limit 15
-            set mp [getMP]
-            if {$mp > $limit} {
-                puts "Casting \[$magic]"
-                send "$magic\r"
-                sleep 3
+        ">" { 
+            foreach buff $buffs {
+                puts "Casting buff \[$buff]"
+                keepCast $buff
+                puts "\[$buff] buffed"
             }
         }
     }
-    
 }
 
 set timeout 3    
@@ -191,6 +228,8 @@ while {1} {
     sleep 5
 
     go "n" 1
+    # No casting in Advanturer Home 
+    buffAll
     go "e" 3
     kill "monk" 1
     go "n" 1
@@ -207,7 +246,11 @@ while {1} {
     go "n" 1
     go "e" 1
     kill "Deer" 4
-    go "w" 1
+    go "e" 2
+    go "n" 2
+    kill "Buffalo" 1
+    go "s" 2
+    go "w" 3
     go "s" 2
     go "e" 1
     kill "Rabbit" 3
