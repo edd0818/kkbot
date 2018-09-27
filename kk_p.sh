@@ -113,7 +113,7 @@ proc getMP {} {
     }
 }
 proc tee {} {
-    return 1
+    puts "Hellp $qq"
 }
 
 spawn telnet -8 kk.muds.idv.tw 4000
@@ -127,7 +127,8 @@ send "a77818\r"
 expect ">"
 sleep 1
 
-set tt [ expr ![tee] ]
-puts $tt
+set qq "Eddie"
+
+tee
 exit
   

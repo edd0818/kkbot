@@ -4,7 +4,7 @@ proc go { direct steps} {
     while {$steps > 0 } {
         expect {
             "你的動作還沒有完成, 不能移動" {
-                sleep 3
+                sleep 2
                 exp_continue
             }
             ">"
@@ -68,17 +68,16 @@ proc prepareToFight {} {
     set hp [getHP]
     set mp [getMP]
 
-    if {$hp < 90 && $mp > 90} {
-        puts "Get heal for fighting."
+    if {$hp < 85 && $mp > 85} {
+        puts "Get heal to start fighting."
         cast "ch"
     }
 }
 
 proc kill { target count } {
-    set min_hp_limit 50
-    set max_hp_limit 85
-    #戰鬥中補血底線
-    set heal_hp_limit 80
+    global min_hp_limit
+    global max_hp_limit
+    global heal_hp_limit
 
     while {$count > 0 } {
         set hasTarget [lookfor "$target"]
@@ -95,6 +94,9 @@ proc kill { target count } {
                         sleep 1
                         send "kill $target\r"
                         expect {
+                            "這裡沒有這個人" {
+                                return
+                            }
                             "你喝道 :「可惡的" {
                                 set isTargetDead [isDead "$target"]
                                 while { !$isTargetDead } {
@@ -193,16 +195,7 @@ proc cast { magic {interval 2} } {
             puts "Failed to cast \[$magic], Out of mana."
             return 1
         }
-        "沒有聽見你的祈願" {
-            return 2
-        }
-        "不理你" {
-            return 2
-        }
-        "什麼事也沒發生" {
-            return 2
-        }
-        "動作沒有完成" {
+        -re "(沒有聽見你的祈願)|(不理你)|(什麼事也沒發生)|(動作沒有完成)" {
             return 2
         }
         default {
@@ -225,7 +218,6 @@ proc  buffAll {} {
     expect {
         ">" { 
             foreach buff $buffs {
-                puts "Praying buff \[$buff]"
                 keepCast $buff
                 puts "\[$buff] buffed"
             }
@@ -240,9 +232,22 @@ proc sellAll {} {
         puts "Inventory has been sold."
     }
 }
-
+#=====================================================================
+# Config
+#=====================================================================
 set timeout 3    
+# 低於血量休息
+set min_hp_limit 50
+# 高於血量停止休息
+set max_hp_limit 85
+# 戰鬥中低於血量，補血
+set heal_hp_limit 80
 
+
+
+#=====================================================================
+#
+#=====================================================================
 spawn telnet -8 kk.muds.idv.tw 4000
 
 
