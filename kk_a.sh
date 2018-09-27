@@ -68,9 +68,9 @@ proc prepareToFight {} {
     set hp [getHP]
     set mp [getMP]
 
-    if {$hp < 85 && $mp > 85} {
+    if {$hp < 90 && $mp > 85} {
         puts "Get heal to start fighting."
-        cast "ch"
+        cast "cc"
     }
 }
 
@@ -241,7 +241,7 @@ set min_hp_limit 50
 # 高於血量停止休息
 set max_hp_limit 85
 # 戰鬥中低於血量，補血
-set heal_hp_limit 80
+set heal_hp_limit 65
 
 
 
@@ -291,6 +291,11 @@ while {1} {
     go "n" 2
     buffAll
     kill "Buffalo" 3
+    go "e" 3
+    go "n" 1
+    kill "horse" 4
+    go "s" 1
+    go "w" 3
     go "s" 2
     go "w" 3
     go "s" 2
@@ -305,8 +310,22 @@ while {1} {
     go "n" 2
     go "w" 2
     go "n" 2
-    go "w" 2
-    go "n" 4
+    go "w" 1
+    go "s" 2
+    # 冒險者*2
+    buffAll
+    kill "Adventurer" 2
+    go "w" 6
+    kill "willow" 1
+    go "e" 6
+    go "n" 2
+    go "w" 1
+    # 城門
+    go "n" 2
+    go "e" 1
+    sellAll
+    go "w" 1
+    go "n" 2
     go "w" 1
     buffAll
     kill "Guard" 2
