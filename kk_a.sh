@@ -70,6 +70,7 @@ proc prepareToFight {} {
 
     if {$hp < 90 && $mp > 85} {
         puts "Get heal to start fighting."
+        sleep 1
         cast "cc"
     }
 }
