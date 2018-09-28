@@ -96,6 +96,7 @@ proc kill { target count } {
                         send "kill $target\r"
                         expect {
                             "這裡沒有這個人" {
+                                puts "No body named \[$target]"
                                 return
                             }
                             "你喝道 :「可惡的" {
@@ -190,13 +191,15 @@ proc getMP {} {
 proc cast { magic {interval 2} } {
     puts "Casting \[$magic]"
     send "$magic\r"
-    sleep $interval
+    
     expect {
         "法力不足" {
             puts "Failed to cast \[$magic], Out of mana."
+            sleep 0.5
             return 1
         }
         -re "(沒有聽見你的祈願)|(不理你)|(什麼事也沒發生)|(動作沒有完成)" {
+            sleep $interval
             return 2
         }
         default {
@@ -215,6 +218,7 @@ proc keepCast { magic } {
 }
 
 proc  buffAll {} {
+    #身體狀況 : 強壯, 毒擊, 祝福, 硬皮術
     set buffs {"cst" "csk" "cbl"}
     expect {
         ">" { 
@@ -249,7 +253,7 @@ set heal_hp_limit 65
 #=====================================================================
 #
 #=====================================================================
-spawn telnet -8 kk.muds.idv.tw 4000
+spawn telnet kk.muds.idv.tw 4000
 
 
 expect "new"
