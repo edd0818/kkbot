@@ -49,7 +49,7 @@ proc isDead { target } {
     sleep 1
     send "l corpse\r"
     expect {
-        "*$target)的屍體" {
+        -re "($target).*\\)的屍體" {
             puts "\[$target] is dead."
             return 1
         }
@@ -67,6 +67,8 @@ proc isDead { target } {
 proc prepareToFight {} {
     set hp [getHP]
     set mp [getMP]
+    sleep 1
+    buffAll
 
     if {$hp < 90 && $mp > 85} {
         puts "Get heal to start fighting."
@@ -83,48 +85,39 @@ proc kill { target count } {
     while {$count > 0 } {
         set hasTarget [lookfor "$target"]
         if { $hasTarget } {
-
             set canFight [isHealthy $min_hp_limit]
-
             if {$canFight} {
                 prepareToFight
-
-                puts "killing \[$target]."
+                sleep 1
+                send "kill $target\r"
                 expect {
-                    ">" {
-                        sleep 1
-                        send "kill $target\r"
-                        expect {
-                            "這裡沒有這個人" {
-                                puts "No body named \[$target]"
-                                return
-                            }
-                            "你喝道 :「可惡的" {
-                                set isTargetDead [isDead "$target"]
-                                while { !$isTargetDead } {
+                    "這裡沒有這個人" {
+                        puts "No body named \[$target]"
+                        return
+                    }
+                    "你喝道 :「可惡的" {
+                        set isTargetDead [isDead "$target"]
+                        while { !$isTargetDead } {
 
-                                    set isTargetDead [isDead "$target"]
+                            set isTargetDead [isDead "$target"]
 
-                                    if { $isTargetDead } {
-                                        sleep 1
-                                        puts "Get all from corpse."
-                                        send "gc\r"
-                                        expect ">"
-                                        send "pa\r"
-                                        set count [expr $count-1]
-                                    } else {
-                                        # 戰鬥中補血
-                                        set needHeal [expr ![isHealthy $heal_hp_limit] ]
+                            if { $isTargetDead } {
+                                sleep 1
+                                puts "Get all from corpse."
+                                send "gc\r"
+                                expect ">"
+                                send "pa\r"
+                                set count [expr $count-1]
+                            } else {
+                                # 戰鬥中補血
+                                set needHeal [expr ![isHealthy $heal_hp_limit] ]
 
-                                        if {$needHeal} {
-                                            cast "ch"
-                                        }
-                                    }
-                                    
+                                if {$needHeal} {
+                                    cast "ch"
                                 }
                             }
+                            
                         }
-                        
                     }
                 }
                 
@@ -218,16 +211,36 @@ proc keepCast { magic } {
 }
 
 proc  buffAll {} {
-    #身體狀況 : 強壯, 毒擊, 祝福, 硬皮術
-    set buffs {"cst" "csk" "cbl"}
+    puts "Checking buffs."
+
+    array set buffs [list "強壯" "cst" "硬皮術" "csk" "祝福" "cbl" ]
+    set status [getBodyStatus]
+    foreach {k v} [array get buffs *] {
+        
+      set buffed [lsearch $status $k]
+      if {$buffed >= 0} {
+        puts "\[$k] buffed."
+      } else {
+        puts "Praying \[$k] buff"
+        keepCast $v
+        puts "\[$k] buffed."
+      }
+    }
+}
+
+proc getBodyStatus {} {   
+    set dummy {}
     expect {
         ">" { 
-            foreach buff $buffs {
-                keepCast $buff
-                puts "\[$buff] buffed"
+            send "sc\r"
+            expect -re "身體狀況 :(.*)" {
+                set str [regsub -all {\s+} $expect_out(1,string) ""]
+                set c_arr [split $str ,]
+                return $c_arr
             }
         }
     }
+    return $dummy
 }
 
 proc sellAll {} {
@@ -271,14 +284,14 @@ while {1} {
     sleep 5
 
     go "n" 1
-    # No MAGIC in Advanturer Home 
-    buffAll
     go "e" 3
     kill "monk" 1
     go "n" 1
+    kill "Barkeeper" 1
     kill "Adventurer" 2
     go "s" 1
     go "e" 1
+    kill "Priest" 2
     kill "adventurer" 1
     go "w" 1
     go "s" 4
@@ -294,7 +307,6 @@ while {1} {
     kill "Deer" 4
     go "e" 2
     go "n" 2
-    buffAll
     kill "Buffalo" 3
     go "e" 3
     go "n" 1
@@ -306,7 +318,9 @@ while {1} {
     go "s" 2
     go "e" 1
     kill "Rabbit" 3
-    go "s" 2
+    go "s" 1
+    kill "Hunter" 1
+    go "s" 1
     go "e" 2
     go "s" 2
     go "e" 2
@@ -317,8 +331,6 @@ while {1} {
     go "n" 2
     go "w" 1
     go "s" 2
-    # 冒險者*2
-    buffAll
     kill "Adventurer" 2
     go "w" 6
     kill "willow" 1
@@ -332,7 +344,6 @@ while {1} {
     go "w" 1
     go "n" 2
     go "w" 1
-    buffAll
     kill "Guard" 2
     go "w" 1
     go "n" 1

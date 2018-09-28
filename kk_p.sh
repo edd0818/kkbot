@@ -116,6 +116,31 @@ proc tee {} {
     puts "Hellp $qq"
 }
 
+proc getBodyStatus {} {
+    set a " 強壯, 毒擊, 祝福, 硬皮術"
+    
+    set a [regsub -all {\s+} $a ""]
+    set b [split $a ,]
+    return $b
+}
+
+proc compare {} {
+    array set ta [list "強壯" "cst" "硬皮術" "csk" "祝福" "cbl" ]
+    set status [getBodyStatus]
+    foreach {k v} [array get ta *] {
+        #puts $k
+      set buffed [lsearch $status $k]
+      if {$buffed >= 0} {
+        puts "\[$k] buffed."
+      }
+    }
+}
+
+proc ret {} {
+
+}
+
+
 spawn telnet -8 kk.muds.idv.tw 4000
 
 
@@ -127,8 +152,8 @@ send "a77818\r"
 expect ">"
 sleep 1
 
-set qq "Eddie"
+set a [ret]
+puts $a
 
-tee
 exit
   
