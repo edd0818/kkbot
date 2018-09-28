@@ -87,39 +87,44 @@ proc kill { target count } {
         if { $hasTarget } {
             set canFight [isHealthy $min_hp_limit]
             if {$canFight} {
-                prepareToFight
-                sleep 1
-                send "kill $target\r"
+                #prepareToFight
                 expect {
-                    "這裡沒有這個人" {
-                        puts "No body named \[$target]"
-                        return
-                    }
-                    "你喝道 :「可惡的" {
-                        set isTargetDead [isDead "$target"]
-                        while { !$isTargetDead } {
+                    ">" {
+                        sleep 1
+                        send "kill $target\r"
+                        expect {
+                            "這裡沒有這個人" {
+                                puts "No body named \[$target]"
+                                return
+                            }
+                            "你喝道 :「可惡的" {
+                                set isTargetDead [isDead "$target"]
+                                while { !$isTargetDead } {
 
-                            set isTargetDead [isDead "$target"]
+                                    set isTargetDead [isDead "$target"]
 
-                            if { $isTargetDead } {
-                                sleep 1
-                                puts "Get all from corpse."
-                                send "gc\r"
-                                expect ">"
-                                send "pa\r"
-                                set count [expr $count-1]
-                            } else {
-                                # 戰鬥中補血
-                                set needHeal [expr ![isHealthy $heal_hp_limit] ]
+                                    if { $isTargetDead } {
+                                        sleep 1
+                                        puts "Get all from corpse."
+                                        send "gc\r"
+                                        expect ">"
+                                        send "pa\r"
+                                        set count [expr $count-1]
+                                    } else {
+                                        # 戰鬥中補血
+                                        set needHeal [expr ![isHealthy $heal_hp_limit] ]
 
-                                if {$needHeal} {
-                                    cast "ch"
+                                        if {$needHeal} {
+                                            #cast "ch"
+                                        }
+                                    }
+                                    
                                 }
                             }
-                            
                         }
                     }
                 }
+                
                 
             } else {
                 rest $max_hp_limit
@@ -148,7 +153,7 @@ proc rest {max_hp_limit } {
     while {$hp < $max_hp_limit} {
         set hp [getHP]
         sleep 1
-        cast "ch"
+        #cast "ch"
         puts "Resting, HP: \[$hp%]."
         sleep 10
     }
@@ -270,7 +275,7 @@ spawn telnet kk.muds.idv.tw 4000
 
 
 expect "new"
-send "xanver\r"
+send "pretender\r"
 
 expect "請輸入密碼"
 send "a77818\r"
@@ -287,56 +292,58 @@ while {1} {
     go "e" 3
     kill "monk" 1
     go "n" 1
-    kill "Barkeeper" 1
     kill "Adventurer" 2
     go "s" 1
-    go "e" 1
-    kill "Priest" 2
-    kill "adventurer" 1
-    go "w" 1
+    # go "e" 1
+    # kill "Priest" 2
+    # kill "adventurer" 1
+    # go "w" 1
     go "s" 4
     go "e" 1
     sellAll
     go "w" 1
     go "s" 2
+    #城門
     go "e" 1
     go "n" 1   
     kill "Fox" 2
-    go "n" 1
-    go "e" 1
-    kill "Deer" 4
-    go "e" 2
-    go "n" 2
-    kill "Buffalo" 3
-    go "e" 3
-    go "n" 1
-    kill "horse" 4
     go "s" 1
-    go "w" 3
-    go "s" 2
-    go "w" 3
-    go "s" 2
+    # go "n" 1
+    # go "e" 1
+    # kill "Deer" 4
+    # go "e" 2
+    # go "n" 2
+    # kill "Buffalo" 3
+    # go "e" 3
+    # go "n" 1
+    # kill "horse" 4
+    # go "s" 1
+    # go "w" 3
+    # go "s" 2
+    # go "w" 3
+    # go "s" 2
     go "e" 1
     kill "Rabbit" 3
-    go "s" 1
-    kill "Hunter" 1
-    go "s" 1
-    go "e" 2
-    go "s" 2
-    go "e" 2
-    kill "Monkey" 3
+    # go "s" 1
+    # kill "Hunter" 1
+    # go "s" 1
+    # go "e" 2
+    # go "s" 2
+    # go "e" 2
+    # kill "Monkey" 3
+    # go "w" 2
+    # go "n" 2
+    # go "w" 2
+    # go "n" 2
+    # go "w" 1
+    # go "s" 2
+    # kill "Adventurer" 2
+    # go "w" 6
+    # kill "willow" 1
+    # go "e" 6
+    # go "n" 2
+    # go "w" 1
     go "w" 2
-    go "n" 2
-    go "w" 2
-    go "n" 2
-    go "w" 1
-    go "s" 2
-    kill "Adventurer" 2
-    go "w" 6
-    kill "willow" 1
-    go "e" 6
-    go "n" 2
-    go "w" 1
     # 城門
     go "n" 2
     go "e" 1
@@ -344,7 +351,7 @@ while {1} {
     go "w" 1
     go "n" 2
     go "w" 1
-    kill "Guard" 2
+    #kill "Guard" 2
     go "w" 1
     go "n" 1
     kill "Frog" 3
