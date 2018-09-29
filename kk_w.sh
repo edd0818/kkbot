@@ -324,26 +324,25 @@ while {1} {
     # go "s" 2
     go "e" 1
     kill "Rabbit" 3
-    # go "s" 1
+    go "s" 1
     # kill "Hunter" 1
-    # go "s" 1
-    # go "e" 2
-    # go "s" 2
-    # go "e" 2
-    # kill "Monkey" 3
-    # go "w" 2
-    # go "n" 2
-    # go "w" 2
-    # go "n" 2
-    # go "w" 1
+    go "s" 1
+    go "e" 2
+    go "s" 2
+    go "e" 2
+    kill "Monkey" 3
+    go "w" 2
+    go "n" 2
+    go "w" 2
+    go "n" 2
+    go "w" 1
     # go "s" 2
     # kill "Adventurer" 2
     # go "w" 6
     # kill "willow" 1
     # go "e" 6
     # go "n" 2
-    # go "w" 1
-    go "w" 2
+    go "w" 1
     # 城門
     go "n" 2
     go "e" 1
