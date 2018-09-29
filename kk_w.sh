@@ -262,7 +262,7 @@ set timeout 3
 # 低於血量休息
 set min_hp_limit 50
 # 高於血量停止休息
-set max_hp_limit 85
+set max_hp_limit 80
 # 戰鬥中低於血量，補血
 set heal_hp_limit 65
 
@@ -350,7 +350,7 @@ while {1} {
     go "w" 1
     go "n" 2
     go "w" 1
-    #kill "Guard" 2
+    kill "Guard" 1
     go "w" 1
     go "n" 1
     kill "Frog" 3
