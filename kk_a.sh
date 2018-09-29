@@ -325,7 +325,7 @@ while {1} {
     go "e" 2
     go "s" 2
     go "e" 2
-    kill "Monkey" 3
+    #kill "Monkey" 3
     go "w" 2
     go "n" 2
     go "w" 2
@@ -353,7 +353,7 @@ while {1} {
     go "w" 1
     go "n" 2
     go "w" 1
-    kill "Guard" 2
+    #kill "Guard" 2
     go "w" 1
     go "n" 1
     #kill "Frog" 3
