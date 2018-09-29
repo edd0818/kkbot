@@ -88,43 +88,38 @@ proc kill { target count } {
             set canFight [isHealthy $min_hp_limit]
             if {$canFight} {
                 #prepareToFight
+                sleep 
+                send "kill $target\r"
                 expect {
-                    ">" {
-                        sleep 1
-                        send "kill $target\r"
-                        expect {
-                            "這裡沒有這個人" {
-                                puts "No body named \[$target]"
-                                return
-                            }
-                            "你喝道 :「可惡的" {
-                                set isTargetDead [isDead "$target"]
-                                while { !$isTargetDead } {
+                    "這裡沒有這個人" {
+                        puts "No body named \[$target]"
+                        return
+                    }
+                    "你喝道 :「可惡的" {
+                        set isTargetDead [isDead "$target"]
+                        while { !$isTargetDead } {
 
-                                    set isTargetDead [isDead "$target"]
+                            set isTargetDead [isDead "$target"]
 
-                                    if { $isTargetDead } {
-                                        sleep 1
-                                        puts "Get all from corpse."
-                                        send "gc\r"
-                                        expect ">"
-                                        send "pa\r"
-                                        set count [expr $count-1]
-                                    } else {
-                                        # 戰鬥中補血
-                                        set needHeal [expr ![isHealthy $heal_hp_limit] ]
+                            if { $isTargetDead } {
+                                sleep 1
+                                puts "Get all from corpse."
+                                send "gc\r"
+                                expect ">"
+                                send "pa\r"
+                                set count [expr $count-1]
+                            } else {
+                                # 戰鬥中補血
+                                set needHeal [expr ![isHealthy $heal_hp_limit] ]
 
-                                        if {$needHeal} {
-                                            #cast "ch"
-                                        }
-                                    }
-                                    
+                                if {$needHeal} {
+                                    #cast "ch"
                                 }
                             }
+                            
                         }
                     }
-                }
-                
+                }  
                 
             } else {
                 rest $max_hp_limit
@@ -310,7 +305,7 @@ while {1} {
     go "s" 1
     # go "n" 1
     # go "e" 1
-    # kill "Deer" 4
+    kill "Deer" 4
     # go "e" 2
     # go "n" 2
     # kill "Buffalo" 3

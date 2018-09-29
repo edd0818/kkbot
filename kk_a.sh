@@ -305,7 +305,7 @@ while {1} {
     #kill "Fox" 2
     go "n" 1
     go "e" 1
-    kill "Deer" 4
+    #kill "Deer" 4
     go "e" 2
     go "n" 2
     kill "Buffalo" 3
