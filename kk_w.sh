@@ -88,7 +88,7 @@ proc kill { target count } {
             set canFight [isHealthy $min_hp_limit]
             if {$canFight} {
                 #prepareToFight
-                sleep 
+                sleep 2
                 send "kill $target\r"
                 expect {
                     "這裡沒有這個人" {
