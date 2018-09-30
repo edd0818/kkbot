@@ -1,11 +1,31 @@
 #!/usr/bin/expect -f
+proc recall {} {
+    sleep 1
+    expect ">" {
+        puts "Recalling"
+        send "recall\r"
+        expect {
+            "你正忙著呢" {
+                recall
+            }
+        }
+    }
+    sleep 5
+}
 
 proc go { direct steps} {
     while {$steps > 0 } {
         expect {
             "你的動作還沒有完成, 不能移動" {
                 sleep 2
-                exp_continue
+                go $direct 1
+            }
+            "你試圖逃走" {
+                sleep 1
+                go $direct 1
+            }
+            -re "你.*逃跑了" {
+                recall
             }
             ">"
             {
@@ -23,21 +43,19 @@ proc lookfor { target } {
     ">"
     {
         puts "looking for \[$target]."
-        send "l\r"
+        send "l $target\r"
         expect {
-                "Rabbitslayer" {
-                    puts "$target not found."
-                    return 0
-                }
-                "$target" 
-                {
+                -re "正處於" {
                     puts "\[$target] found."
                     return 1
                 }
-                default
-                {
+                "你要看什麼" {
                     puts "\[$target] not found."
                     return 0
+                }
+                default {
+                    puts "\[$target] found."
+                    return 1
                 }
             }
             
@@ -62,6 +80,14 @@ proc isDead { target } {
             return 0
         }
     }       
+}
+
+proc handleCorpse {} {
+    puts "Get all from corpse."
+    sleep 1
+    send "gc\r"
+    expect ">"
+    send "pa\r"
 }
 
 proc prepareToFight {} {
@@ -96,27 +122,29 @@ proc kill { target count } {
                         return
                     }
                     "你喝道 :「可惡的" {
-                        set isTargetDead [isDead "$target"]
-                        while { !$isTargetDead } {
-
-                            set isTargetDead [isDead "$target"]
-
-                            if { $isTargetDead } {
-                                sleep 1
-                                puts "Get all from corpse."
-                                send "gc\r"
-                                expect ">"
-                                send "pa\r"
+                        expect {
+                            -re "死了|你得到.*點經驗" {
+                                puts "\[$target] is dead."
+                                handleCorpse
                                 set count [expr $count-1]
-                            } else {
+                            }
+                            -re "\[你|妳]?.*\[傷害|格開|但是沒中|從旁邊擦過|用盾擋開]" {
+                                set hasTarget [lookfor "$target"]
+                                puts "Fighting with \[$target]."
                                 # 戰鬥中補血
                                 set needHeal [expr ![isHealthy $heal_hp_limit] ]
 
                                 if {$needHeal} {
+                                    puts "Need healing in fighting."
                                     #cast "ch"
                                 }
+                                exp_continue
                             }
-                            
+                            default {
+                                puts "\[$target] is dead."
+                                handleCorpse
+                                set count [expr $count-1]
+                            }
                         }
                     }
                 }  
@@ -250,10 +278,11 @@ proc sellAll {} {
         puts "Inventory has been sold."
     }
 }
+
 #=====================================================================
 # Config
 #=====================================================================
-set timeout 3    
+set timeout 3
 # 低於血量休息
 set min_hp_limit 50
 # 高於血量停止休息
@@ -278,77 +307,86 @@ send "a77818\r"
 
 
 while {1} {
-    expect ">"
-    send "recall\r"
-
-    sleep 5
+    
+    recall
 
     go "n" 1
     go "e" 3
-    kill "monk" 1
+    #kill "monk" 1
     go "n" 1
-    kill "Adventurer" 2
+    kill "barkeeper" 1
+    #kill "Adventurer" 2
     go "s" 1
-    # go "e" 1
-    # kill "Priest" 2
-    # kill "adventurer" 1
-    # go "w" 1
+    go "e" 1
+    kill "Priest" 1
+    kill "adventurer" 1
+    go "w" 1
     go "s" 4
     go "e" 1
     sellAll
     go "w" 1
     go "s" 2
+    kill "guard" 1
     #城門
     go "e" 1
     go "n" 1   
-    kill "Fox" 2
-    go "s" 1
-    # go "n" 1
-    # go "e" 1
-    kill "Deer" 4
-    # go "e" 2
-    # go "n" 2
-    # kill "Buffalo" 3
-    # go "e" 3
-    # go "n" 1
-    # kill "horse" 4
-    # go "s" 1
-    # go "w" 3
-    # go "s" 2
-    # go "w" 3
-    # go "s" 2
+    #kill "fox" 2
+    go "n" 1
     go "e" 1
-    kill "Rabbit" 3
+    #kill "deer" 4
+    go "e" 2
+    go "n" 2
+    kill "buffalo" 3
+    go "e" 3
+    go "n" 1
+    kill "horse" 4
+    go "s" 2
+    #kill "sheep" 4
+    go "n" 1
+    go "w" 3
+    go "s" 2
+    go "w" 3
+    go "s" 2
+    go "e" 1
+    #kill "Rabbit" 3
     go "s" 1
     # kill "Hunter" 1
     go "s" 1
     go "e" 2
     go "s" 2
     go "e" 2
-    kill "Monkey" 3
+    kill "monkey" 3
     go "w" 2
     go "n" 2
     go "w" 2
     go "n" 2
     go "w" 1
-    # go "s" 2
-    # kill "Adventurer" 2
-    # go "w" 6
-    # kill "willow" 1
-    # go "e" 6
-    # go "n" 2
+    go "s" 2
+    kill "adventurer" 2
+    go "e" 4
+    go "s" 7
+    go "e" 2
+    kill "horse" 4
+    go "w" 2
+    go "n" 7
+    go "w" 4
+    go "w" 6
+    kill "willow" 1
+    go "e" 6
+    go "n" 2
     go "w" 1
     # 城門
+    kill "guard" 1
     go "n" 2
     go "e" 1
     sellAll
     go "w" 1
     go "n" 2
     go "w" 1
-    kill "Guard" 1
+    kill "guard" 2
     go "w" 1
     go "n" 1
-    kill "Frog" 3
+    #kill "Frog" 3
     #go "s" 1
     #go "w" 2
     #go "n" 2

@@ -153,7 +153,7 @@ expect ">"
 sleep 1
 
 set a [ret]
-puts $a
+if([info exists var]
 
 exit
   
