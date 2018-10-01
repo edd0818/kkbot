@@ -318,7 +318,7 @@ while {1} {
     #kill "Adventurer" 2
     go "s" 1
     go "e" 1
-    kill "Priest" 1
+    kill "priest" 1
     kill "adventurer" 1
     go "w" 1
     go "s" 4
@@ -350,7 +350,7 @@ while {1} {
     go "e" 1
     #kill "Rabbit" 3
     go "s" 1
-    # kill "Hunter" 1
+    kill "Hunter" 1
     go "s" 1
     go "e" 2
     go "s" 2
