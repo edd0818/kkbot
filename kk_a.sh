@@ -324,7 +324,7 @@ while {1} {
 
     go "n" 1
     go "e" 4
-    kill "priest" 2
+    #kill "priest" 2
     go "e" 1
     transport mercy
     go "e" 2
