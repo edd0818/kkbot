@@ -318,7 +318,7 @@ while {1} {
     #kill "Adventurer" 2
     go "s" 1
     go "e" 1
-    kill "priest" 1
+    kill "priest" 2
     kill "adventurer" 1
     go "w" 1
     go "s" 4
@@ -350,12 +350,12 @@ while {1} {
     go "e" 1
     #kill "Rabbit" 3
     go "s" 1
-    kill "Hunter" 1
+    kill "hunter" 1
     go "s" 1
     go "e" 2
     go "s" 2
     go "e" 2
-    kill "monkey" 3
+    #kill "monkey" 3
     go "w" 2
     go "n" 2
     go "w" 2
@@ -376,14 +376,14 @@ while {1} {
     go "n" 2
     go "w" 1
     # 城門
-    kill "guard" 1
+    kill "guard" 2
     go "n" 2
     go "e" 1
     sellAll
     go "w" 1
     go "n" 2
     go "w" 1
-    kill "guard" 2
+    #kill "guard" 2
     go "w" 1
     go "n" 1
     #kill "Frog" 3
