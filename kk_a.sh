@@ -108,7 +108,7 @@ proc prepareToFight {} {
     if {$hp < 90 && $mp > 70} {
         puts "Get heal to start fighting."
         sleep 1
-        cast "cc"
+        cast "heal"
     }
 }
 
@@ -145,7 +145,7 @@ proc kill { target count } {
 
                                 if {$needHeal} {
                                     puts "Need healing in fighting."
-                                    cast "ch"
+                                    cast "heal"
                                 }
                                 exp_continue
                             }
@@ -185,7 +185,7 @@ proc rest {max_hp_limit } {
     while {$hp < $max_hp_limit} {
         set hp [getHP]
         sleep 1
-        cast "ch"
+        cast "heal"
         puts "Resting, HP: \[$hp%]."
         sleep 10
     }
@@ -220,7 +220,7 @@ proc getMP {} {
 
 proc cast { magic {interval 2} } {
     puts "Casting \[$magic]"
-    send "$magic\r"
+    send "cast $magic\r"
     
     expect {
         "法力不足" {
@@ -250,7 +250,7 @@ proc keepCast { magic } {
 proc  buffAll {} {
     puts "Checking buffs."
 
-    array set buffs [list "強壯" "cst" "硬皮術" "csk" "祝福" "cbl" ]
+    array set buffs [list "強壯" "strong" "硬皮術" "stone_skin" "祝福" "bless" "朦朧術" "hazy"]
     set status [getBodyStatus]
     foreach {k v} [array get buffs *] {
         
