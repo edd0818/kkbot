@@ -16,53 +16,45 @@ proc recall {} {
 
 proc go { direct steps} {
     while {$steps > 0 } {
+        puts "going to \[$direct]"
+        send "$direct\r"
         expect {
-            "你的動作還沒有完成, 不能移動" {
-                sleep 2
-                go $direct 1
-            }
-            "你試圖逃走" {
+            -re "(你的動作還沒有完成, 不能移動)|(你的指令下太快了)|(你試圖逃走)" {
                 sleep 1
-                go $direct 1
             }
-            -re "你.*逃跑了" {
+            -re "(你.*逃跑了)" {
                 recall
+                break
             }
-            ">"
-            {
-                puts "going to \[$direct]"
-                send "$direct\r"
+             -re "(這裡明顯的出口是)|(這裡唯一的出口)" {
+                puts "arrive \[$direct]"
+                set steps [expr $steps-1];
+                sleep 0.5
             }
-        }
-        set steps [expr $steps-1];
-        sleep 1
+        }      
     }
 }
 
 proc lookfor { target } {
+    sleep 1
+    puts "looking for \[$target]."
+    send "l $target\r"
     expect {
-    ">"
-    {
-        puts "looking for \[$target]."
-        send "l $target\r"
-        expect {
-                -re "正處於" {
-                    puts "\[$target] found."
-                    return 1
-                }
-                "你要看什麼" {
-                    puts "\[$target] not found."
-                    return 0
-                }
-                default {
-                    puts "\[$target] found."
-                    return 1
-                }
-            }
-            
+        -re "正處於" {
+            puts "\[$target] found."
+            return 1
+        }
+        "你要看什麼" {
+            puts "\[$target] not found."
+            return 0
+        }
+        default {
+            puts "\[$target] found."
+            return 1
         }
     }
 }
+
 proc isDead { target } {
     puts "is \[$target] dead?"
     sleep 1
@@ -95,13 +87,10 @@ proc beforeFight {} {
     buffAll
     buffWeapon
 
-    set hp [getHP]
-    sleep 1
-    set mp [getMP]
-    sleep 1
+    global hp
+    global mp
 
     if {$hp > 95 && $mp < 90} {
-        
         meditate
     }
 }
@@ -111,10 +100,15 @@ proc kill { target count } {
     global max_hp_limit
     global heal_hp_limit
 
+    global hp
+    global mp
+
     while {$count > 0 } {
         set hasTarget [lookfor "$target"]
         if { $hasTarget } {
-            set canFight [isHealthy $min_hp_limit]
+            refreshHPMP
+            set canFight [expr $hp > $min_hp_limit]
+
             if {$canFight} {
                 beforeFight
                 sleep 2
@@ -124,19 +118,18 @@ proc kill { target count } {
                         puts "No body named \[$target]"
                         return
                     }
-                    "你喝道 :「可惡的" {
+                    -re "(你喝道 :「可惡的)|(對 !! 加油 !! 加油 !!)" {
                         expect {
-                            -re "死了|你得到.*點經驗" {
+                            -re "(你得到.*點經驗)" {
                                 puts "\[$target] is dead."
                                 handleCorpse
                                 set count [expr $count-1]
                             }
-                            -re "\[你|妳]?.*\[傷害|格開|但是沒中|從旁邊擦過|用盾擋開]" {
-                                set hasTarget [lookfor "$target"]
+                            -re "(\[你|妳]?.*\[傷害|格開|但是沒中|從旁邊擦過|用盾擋開])|(\[但是沒有傷到要害|但是看起來並不要緊|流了許多鮮血|有生命危險|奄奄一息了]。 \\))" {
                                 puts "Fighting with \[$target]."
+                                refreshHPMP
                                 # 戰鬥中補血
-                                set needHeal [expr ![isHealthy $heal_hp_limit] ]
-
+                                set needHeal [expr $hp < $heal_hp_limit ]
                                 if {$needHeal} {
                                     puts "Need healing in fighting."
                                     #cast "ch"
@@ -162,22 +155,12 @@ proc kill { target count } {
     
 }
 
-proc isHealthy { min_hp_limit } {
-    set hp [getHP]
-    if {$hp < $min_hp_limit} {
-        puts "HP is lower than \[$min_hp_limit%]."
-        return 0   
-    } else {
-        puts "I'm healthy."
-        return 1
-    }
-}
-
 proc rest {max_hp_limit } {
-    set hp [getHP]
+    global hp 
+    refreshHPMP
 
     while {$hp < $max_hp_limit} {
-        set hp [getHP]
+        refreshHPMP        
         sleep 1
         #cast "ch"
         puts "Resting, HP: \[$hp%]."
@@ -185,30 +168,22 @@ proc rest {max_hp_limit } {
     }
 }
 
-proc getHP {} {
+proc refreshHPMP {} {
+    global hp
+    global mp
+
     send "hp\r"
     expect {
-        -re "體力 :\[ ]*(\\d+)\/\[ ]*(\\d+)" {
+        -re "體力 :\[ ]*(\\d+)\/\[ ]*(\\d+)\r\n法力 :\[ ]*(\\d+)\/\[ ]*(\\d+)" {
             set hp_c $expect_out(1,string)
             set hp_m $expect_out(2,string)
-            set p [expr (double($hp_c)/$hp_m)*100]
-            puts "HP: $p%"
-            return $p
+            set hp [expr (double($hp_c)/$hp_m)*100]
+            puts "HP: $hp%"
+            set mp_c $expect_out(3,string)
+            set mp_m $expect_out(4,string)
+            set mp [expr (double($mp_c)/$mp_m)*100]
+            puts "MP: $mp%"          
         }   
-    }
-    
-}
-proc getMP {} {
-    send "hp\r"
-    expect {
-        -re "法力 :\[ ]*(\\d+)\/\[ ]*(\\d+)" {
-            set mp_c $expect_out(1,string)
-            set mp_m $expect_out(2,string)
-            set p [expr (double($mp_c)/$mp_m)*100]
-            puts "MP: $p%"
-            return $p
-        }
-        
     }
 }
 
@@ -314,7 +289,7 @@ proc meditate {} {
         "不能冥思" {
             puts "Not ready to meditate." 
         }
-        -re "(你看見)|(你覺得)" {
+        -re "(開始冥思)|(你看見)|(你覺得)|(你聽到)|(驚醒)" {
             exp_continue
         }
         "你從冥思中醒來" {
@@ -364,7 +339,7 @@ while {1} {
     go "e" 3
     kill "monk" 1
     go "n" 1
-    #kill "Barkeeper" 1
+    kill "barkeeper" 1
     kill "adventurer" 2
     go "s" 1
     go "e" 1
