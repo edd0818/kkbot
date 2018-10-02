@@ -99,16 +99,22 @@ proc handleCorpse {} {
     send "pa\r"
 }
 
-proc prepareToFight {} {
+proc beforeFight {} {
+    buffAll
+
     set hp [getHP]
     set mp [getMP]
-    sleep 1
-    buffAll
+    
+    sleep 1 
 
     if {$hp < 90 && $mp > 70} {
         puts "Get heal to start fighting."
         sleep 1
         cast "heal"
+    }
+
+    if {$hp > 95 && $mp < 90} {
+        meditate
     }
 }
 
@@ -122,8 +128,15 @@ proc kill { target count } {
         if { $hasTarget } {
             set canFight [isHealthy $min_hp_limit]
             if {$canFight} {
-                prepareToFight
+                beforeFight
                 sleep 1
+
+                # set mp [getMP]
+
+                # if {$mp > 50} {
+                #     cast "spirit_hammer" $target
+                # }
+
                 send "kill $target\r"
                 expect {
                     "這裡沒有這個人" {
@@ -218,9 +231,15 @@ proc getMP {} {
     }
 }
 
-proc cast { magic {interval 2} } {
-    puts "Casting \[$magic]"
-    send "cast $magic\r"
+proc cast { magic {target ""} {interval 2} } {
+    global user
+    if {$target == ""} {
+        set target $user
+    } 
+
+    puts "target: $target"
+    puts "Casting \[$magic] on \[$target]"
+    send "cast $magic on $target\r"
     
     expect {
         "法力不足" {
@@ -250,7 +269,7 @@ proc keepCast { magic } {
 proc  buffAll {} {
     puts "Checking buffs."
 
-    array set buffs [list "強壯" "strong" "硬皮術" "stone_skin" "祝福" "bless" "朦朧術" "hazy"]
+    global buffs [list "強壯" "strong" "硬皮術" "stone_skin" "祝福" "bless" "朦朧術" "hazy"]
     set status [getBodyStatus]
     foreach {k v} [array get buffs *] {
         
@@ -294,18 +313,53 @@ proc transport { kingdom } {
     }
     sleep 5
 }
+
+proc saveAllMoney {} {
+    sleep 1
+    send "sc\r"
+    expect -re "身上帶著 (\\d+) 枚金幣" {
+        set money $expect_out(1,string)
+        if {$money > 0} {
+            puts "Depositing $money in bank."
+            send "deposit $money\r"
+        }       
+    } 
+}
+#=====================================================================
+# Mage
+#=====================================================================
+proc meditate {} {
+    puts "Meditating..."
+    sleep 1
+    send "meditate\r"
+    expect {
+        "不能冥思" {
+            puts "Not ready to meditate." 
+        }
+        -re "(你看見)|(你覺得)" {
+            exp_continue
+        }
+        "你從冥思中醒來" {
+            puts "done."
+        }
+    }
+}
 #=====================================================================
 # Config
 #=====================================================================
 set timeout 3    
+# user
+set user "xanver"
+# pwd
+set password "a77818"
 # 低於血量休息
 set min_hp_limit 50
 # 高於血量停止休息
 set max_hp_limit 85
 # 戰鬥中低於血量，補血
 set heal_hp_limit 70
-
-
+# 增益法術
+array set buffs [list "強壯" "strong" "硬皮術" "stone_skin" "祝福" "bless" "朦朧術" "hazy"]
 
 #=====================================================================
 #
@@ -314,10 +368,10 @@ spawn telnet kk.muds.idv.tw 4000
 
 
 expect "new"
-send "xanver\r"
+send "$user\r"
 
 expect "請輸入密碼"
-send "a77818\r"
+send "$password\r"
 
 while {1} {
     recall
@@ -331,9 +385,9 @@ while {1} {
     #精靈塔
     sleep 2
     go "u" 1
-    kill "spirit" 2
+    #kill "spirit" 2
     go "u" 1
-    kill "fairy" 2
+    #kill "fairy" 2
     go "u" 1
     kill "element" 2
     go "u" 1
@@ -364,9 +418,9 @@ while {1} {
     kill "boy" 1
     go "n" 2
     go "u" 1
-    kill "spirit" 2
+    #kill "spirit" 2
     go "u" 1
-    kill "fairy" 2
+    #kill "fairy" 2
     go "u" 1
     kill "element" 2
     go "u" 1
@@ -374,11 +428,11 @@ while {1} {
     go "d" 4
     go "s" 5
     #主殿
-    go "s" 2
-    go "e" 1
-    kill "waitress" 1
-    go "w" 1
-    go "n" 2
+    # go "s" 2
+    # go "e" 1
+    # kill "waitress" 1
+    # go "w" 1
+    # go "n" 2
     go "e" 2
     go "n" 1
     sellAll
@@ -392,9 +446,9 @@ while {1} {
     go "n" 1
     go "e" 3
     go "u" 1
-     kill "spirit" 2
+    #kill "spirit" 2
     go "u" 1
-    kill "fairy" 2
+    #kill "fairy" 2
     go "u" 1
     kill "element" 2
     go "u" 1

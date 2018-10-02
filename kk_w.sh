@@ -86,8 +86,8 @@ proc handleCorpse {} {
     puts "Get all from corpse."
     sleep 1
     send "gc\r"
-    expect ">"
-    send "pa\r"
+    # expect ">"
+    # send "pa\r"
 }
 
 proc prepareToFight {} {
@@ -279,6 +279,25 @@ proc sellAll {} {
     }
 }
 
+proc transport { kingdom } {
+    expect ">" {
+        send "pray mercy\r"
+    }
+    sleep 5
+}
+
+proc saveAllMoney {} {
+    sleep 1
+    send "sc\r"
+    expect -re "身上帶著 (\\d+) 枚金幣" {
+        set money $expect_out(1,string)
+        if {$money > 0} {
+            puts "Depositing $money in bank."
+            send "deposit $money\r"
+        }       
+    } 
+}
+
 #=====================================================================
 # Config
 #=====================================================================
@@ -319,79 +338,111 @@ while {1} {
     go "s" 1
     go "e" 1
     kill "priest" 2
-    kill "adventurer" 1
+    #kill "adventurer" 1
     go "w" 1
-    go "s" 4
+    go "s" 3
+    go "e" 1
+    saveAllMoney
+    go "w" 1
+    go "s" 1
     go "e" 1
     sellAll
     go "w" 1
     go "s" 2
-    kill "guard" 1
+    kill "guard" 2
     #城門
     go "e" 1
-    go "n" 1   
-    #kill "fox" 2
-    go "n" 1
-    go "e" 1
-    #kill "deer" 4
-    go "e" 2
-    go "n" 2
-    #kill "buffalo" 3
-    go "e" 3
-    go "n" 1
-    kill "horse" 4
-    go "s" 2
-    #kill "sheep" 4
-    go "n" 1
-    go "w" 3
-    go "s" 2
-    go "w" 3
-    go "s" 2
-    go "e" 1
-    #kill "Rabbit" 3
-    go "s" 1
-    kill "hunter" 1
-    go "s" 1
-    go "e" 2
-    go "s" 2
-    go "e" 2
-    #kill "monkey" 3
-    go "w" 2
-    go "n" 2
-    go "w" 2
-    go "n" 2
-    go "w" 1
     go "s" 2
     kill "adventurer" 2
-    go "e" 4
-    go "s" 7
-    go "e" 2
-    kill "horse" 4
+    go "e" 1
+    go "n" 1
+    kill "hunter" 1
+    go "n" 1
     go "w" 2
-    go "n" 7
-    go "w" 4
-    go "w" 6
-    kill "willow" 1
-    go "e" 6
-    go "n" 2
-    go "w" 1
     # 城門
     kill "guard" 2
     go "n" 2
     go "e" 1
     sellAll
     go "w" 1
-    go "n" 2
-    go "w" 1
-    #kill "guard" 2
-    go "w" 1
+    go "n" 4
+    go "e" 2
+    transport mercy
+
+    go "e" 2
+    #精靈塔
+    sleep 2
+    go "u" 1
+    kill "spirit" 2
+    go "u" 1
+    kill "fairy" 2
+    #go "u" 1
+    #kill "element" 2
+    #go "u" 1
+    #kill "water" 1
+    go "d" 2
+    go "e" 1
+    #kill "traveller" 1
+    #kill "man" 1
+    go "e" 1
+    #kill "man" 1
+    #kill "girl" 1
+    go "e" 1
+    #go "n" 1
+    #kill "visitor" 1
+    #kill "man" 1
+    #go "s" 2
+    #kill "pagan" 2
+    #go "n" 1
+    go "e" 2
     go "n" 1
-    #kill "Frog" 3
-    #go "s" 1
-    #go "w" 2
-    #go "n" 2
-    #go "e" 1
-    #go "s" 1
+    #kill "girl" 1
+    #kill "traveller" 1
+    go "n" 1
+    #kill "woman" 1
+    #kill "girl" 1
+    #kill "boy" 1
+    go "n" 1
+    #kill "boy" 1
+    go "n" 2
+    go "u" 1
+    kill "spirit" 2
+    go "u" 1
+    kill "fairy" 2
+    #go "u" 1
+    #kill "element" 2
+    #go "u" 1
+    #kill "fire" 1
+    go "d" 2
+    go "s" 5
+    #主殿
+    # go "s" 2
+    # go "e" 1
+    # kill "waitress" 1
+    # go "w" 1
+    # go "n" 2
+    go "e" 2
+    go "n" 1
+    sellAll
+    #kill "woman" 1
+    #kill "clerk" 1
+    #sellAll
+    go "s" 1
+    #kill "adventurer" 1
+    #kill "female" 1
+    #kill "Cleric" 1
+    #go "n" 1
+    go "e" 3
+    go "u" 1
+     kill "spirit" 2
+    go "u" 1
+    kill "fairy" 2
+    #go "u" 1
+    #kill "element" 2
+    #go "u" 1
+    #kill "wind" 1
+    go "d" 2
+    
     sleep 1
     send "save\r"
 }

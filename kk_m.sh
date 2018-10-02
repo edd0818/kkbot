@@ -87,20 +87,22 @@ proc handleCorpse {} {
     puts "Get all from corpse."
     sleep 1
     send "gc\r"
-    expect ">"
-    send "pa\r"
+    # expect ">"
+    # send "pa\r"
 }
 
-proc prepareToFight {} {
+proc beforeFight {} {
+    buffAll
+    buffWeapon
+
     set hp [getHP]
+    sleep 1
     set mp [getMP]
     sleep 1
-    buffAll
 
-    if {$hp < 90 && $mp > 85} {
-        puts "Get heal to start fighting."
-        sleep 1
-        cast "cc"
+    if {$hp > 95 && $mp < 90} {
+        
+        meditate
     }
 }
 
@@ -114,7 +116,7 @@ proc kill { target count } {
         if { $hasTarget } {
             set canFight [isHealthy $min_hp_limit]
             if {$canFight} {
-                #prepareToFight
+                beforeFight
                 sleep 2
                 send "kill $target\r"
                 expect {
@@ -212,7 +214,7 @@ proc getMP {} {
 
 proc cast { magic {interval 2} } {
     puts "Casting \[$magic]"
-    send "$magic\r"
+    send "cast $magic\r"
     
     expect {
         "法力不足" {
@@ -223,6 +225,9 @@ proc cast { magic {interval 2} } {
         -re "(沒有聽見你的祈願)|(不理你)|(什麼事也沒發生)|(動作沒有完成)" {
             sleep $interval
             return 2
+        }
+        -re "(已經)" {
+            return 0
         }
         default {
             return 0
@@ -242,7 +247,7 @@ proc keepCast { magic } {
 proc  buffAll {} {
     puts "Checking buffs."
 
-    array set buffs [list "強壯" "cst" "硬皮術" "csk" "祝福" "cbl" ]
+    global buffs
     set status [getBodyStatus]
     foreach {k v} [array get buffs *] {
         
@@ -279,6 +284,51 @@ proc sellAll {} {
         puts "Inventory has been sold."
     }
 }
+
+proc transport { kingdom } {
+    expect ">" {
+        send "pray mercy\r"
+    }
+    sleep 5
+}
+
+proc saveAllMoney {} {
+    sleep 1
+    send "sc\r"
+    expect -re "身上帶著 (\\d+) 枚金幣" {
+        set money $expect_out(1,string)
+        if {$money > 0} {
+            puts "Depositing $money in bank."
+            send "deposit $money\r"
+        }       
+    } 
+}
+#=====================================================================
+# Mage
+#=====================================================================
+proc meditate {} {
+    puts "Meditating..."
+    sleep 1
+    send "meditate\r"
+    expect {
+        "不能冥思" {
+            puts "Not ready to meditate." 
+        }
+        -re "(你看見)|(你覺得)" {
+            exp_continue
+        }
+        "你從冥思中醒來" {
+            puts "done."
+        }
+    }
+}
+
+proc buffWeapon {} {
+    puts "Buff weapon."
+    sleep 1
+    keepCast "coating"  
+}
+
 #=====================================================================
 # Config
 #=====================================================================
@@ -289,7 +339,8 @@ set min_hp_limit 50
 set max_hp_limit 80
 # 戰鬥中低於血量，補血
 set heal_hp_limit 65
-
+# 增益法術
+array set buffs [list "亞伯拉之盾" "magic_shield"]
 
 
 #=====================================================================
@@ -318,7 +369,7 @@ while {1} {
     go "s" 1
     go "e" 1
     # kill "Priest" 2
-    #kill "adventurer" 1
+    kill "adventurer" 1
     go "w" 1
     go "s" 4
     kill "dog" 1
@@ -338,7 +389,7 @@ while {1} {
     kill "buffalo" 3
     go "e" 3
     go "n" 1
-    #kill "horse" 4
+    kill "horse" 4
     go "s" 2
     kill "sheep" 4
     go "n" 1
@@ -365,7 +416,7 @@ while {1} {
     go "e" 4
     go "s" 7
     go "e" 2
-    #kill "horse" 4
+    kill "horse" 4
     go "w" 2
     go "n" 7
     go "w" 4
