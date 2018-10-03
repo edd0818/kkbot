@@ -18,7 +18,7 @@ proc beforeFight {target} {
 
     refreshHPMP
 
-    if {$mp > 55} {
+    if {$mp > 40} {
         cast "wolf"
     }
 }
