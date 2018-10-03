@@ -28,8 +28,6 @@ set min_hp_limit 50
 set max_hp_limit 80
 # 戰鬥中低於血量，補血
 set heal_hp_limit 65
-# freeze 走錯路
-set freeze 0
 # 增益法術
 array set buffs [list "亞伯拉之盾" "magic_shield"]
 

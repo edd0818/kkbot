@@ -124,8 +124,6 @@ set min_hp_limit 50
 set max_hp_limit 85
 # 戰鬥中低於血量，補血
 set heal_hp_limit 75
-# freeze 走錯路
-set freeze 0
 # 增益法術
 array set buffs [list "強壯" "strong" "硬皮術" "stone_skin" "祝福" "bless" "朦朧術" "hazy"]
 
