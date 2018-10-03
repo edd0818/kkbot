@@ -40,6 +40,9 @@ proc afterFight {} {
 }
 
 proc kill { target count } {
+    global freeze
+    if {$freeze} {return}
+
     global min_hp_limit
     global max_hp_limit
     global heal_hp_limit
@@ -111,7 +114,7 @@ proc kill { target count } {
 #=====================================================================
 # Config
 #=====================================================================
-set timeout 3    
+set timeout 5
 # user
 set user "xanver"
 # pwd
