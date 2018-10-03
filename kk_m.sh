@@ -9,85 +9,38 @@ if {[dict get $options -code] != 0} {
     exit 1
 }
 
-proc beforeFight {} {
+proc beforeFight {target} {
     buffAll
     buffWeapon
 
     global hp
     global mp
 
-    if {$hp > 95 && $mp < 90} {
-        meditate
+    refreshHPMP
+
+    if {$mp > 55} {
+        cast "wolf"
     }
 }
 
-proc kill { target count } {
-    global freeze
-    if {$freeze} {return}
-
-    global min_hp_limit
-    global max_hp_limit
-    global heal_hp_limit
-
+proc onFight {target} {
     global hp
     global mp
 
-    while {$count > 0 } {
-        set hasTarget [lookfor "$target"]
-        if { $hasTarget } {
-            refreshHPMP
-            set canFight [expr $hp > $min_hp_limit]
+    refreshHPMP
 
-            if {$canFight} {
-                beforeFight
-                sleep 2
-                send "kill $target\r"
-                expect {
-                    "這裡沒有這個人" {
-                        puts "No body named \[$target]"
-                        return
-                    }
-                    -re "(你喝道 :「可惡的)|(對 !! 加油 !! 加油 !!)" {
-                        set retry 0
-                        expect {
-                            -re "(你得到.*點經驗)" {
-                                puts "\[$target] is dead."
-                                handleCorpse
-                                set count [expr $count-1]
-                            }
-                            -re "(\[你|妳]?.*\[傷害|格開|但是沒中|從旁邊擦過|用盾擋開])|(\[但是沒有傷到要害|但是看起來並不要緊|流了許多鮮血|有生命危險|奄奄一息了]。 \\))" {
-                                puts "Fighting with \[$target]."
-                                refreshHPMP
-                                # 戰鬥中補血
-                                set needHeal [expr $hp < $heal_hp_limit ]
-                                if {$needHeal} {
-                                    puts "Need healing in fighting."
-                                    #cast "ch"
-                                }
-                                exp_continue
-                            }
-                            default {
-                                if {$retry > 0} {
-                                    puts "\[$target] is dead.(timeout)"
-                                    handleCorpse
-                                    set count [expr $count-1]
-                                } else {
-                                    set retry [expr $retry+1]
-                                    exp_continue
-                                }  
-                            }
-                        }
-                    }
-                }  
-                
-            } else {
-                rest $max_hp_limit
-            }
-            
-        } else { return }
-        
+
+}
+
+proc afterFight {target} {
+    global hp
+    global mp
+
+    refreshHPMP
+
+    if {$hp > 95 && $mp < 90} {
+        meditate
     }
-    
 }
 
 #=====================================================================
@@ -136,7 +89,7 @@ while {1} {
     kill "adventurer" 2
     go "s" 1
     go "e" 1
-    # kill "Priest" 2
+    kill "priest" 1
     kill "adventurer" 1
     go "w" 1
     go "s" 4
@@ -189,12 +142,12 @@ while {1} {
     go "n" 7
     go "w" 4
     #go "w" 6
-    # kill "willow" 1
+    kill "willow" 1
     # go "e" 6
     go "n" 2
     go "w" 1
     # 城門
-    # kill "guard" 2
+    kill "guard" 1
     go "n" 2
     go "e" 1
     sellAll

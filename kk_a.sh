@@ -11,105 +11,52 @@ if {[dict get $options -code] != 0} {
     exit 1
 }
 
-proc beforeFight {} {
+proc beforeFight {target} {
     buffAll
 
     global hp
     global mp
-    global clazz
-    
-    sleep 1 
 
-    if {$clazz == 1 && $hp < 90 && $mp > 80} {
+    if {$hp < 90 && $mp > 80} {
         puts "Get heal to start fighting."
         sleep 1
         cast "heal"
     }
+
+    refreshHPMP
+    if {$mp > 50} {
+        cast spirit_hammer $target
+    }
 }
 
-proc afterFight {} {
+proc onFight {target} {
     global hp
     global mp
-    global clazz
+    global heal_hp_limit
 
     refreshHPMP
 
-    if {$clazz != 0 && $hp > 95 && $mp < 90} {
+    # 戰鬥中補血
+    set needHeal [expr $hp < $heal_hp_limit ]
+
+    if {$needHeal} {
+        puts "Need healing in fighting."
+        cast "heal"
+    }
+}
+
+proc afterFight {target} {
+    global hp
+    global mp
+
+    refreshHPMP
+
+    if {$hp > 95 && $mp < 90} {
         meditate
     }
 }
 
-proc kill { target count } {
-    global freeze
-    if {$freeze} {return}
 
-    global min_hp_limit
-    global max_hp_limit
-    global heal_hp_limit
-
-    global hp
-    global mp
-
-    while {$count > 0 } {
-        set hasTarget [lookfor "$target"]
-        if { $hasTarget } {
-            refreshHPMP
-            set canFight [expr $hp > $min_hp_limit]
-
-            if {$canFight} {
-                beforeFight
-                sleep 1
-
-                if {$mp > 50} {
-                    cast spirit_hammer $target
-                }
-
-                send "kill $target\r"
-                expect {
-                    "這裡沒有這個人" {
-                        puts "No body named \[$target]"
-                        return
-                    }
-                    -re "(你喝道 :「可惡的)|(對 !! 加油 !! 加油 !!)" {
-                        set retry 0
-                        expect {
-                            -re "(你得到.*點經驗)" {
-                                puts "\[$target] is dead."
-                                handleCorpse
-                                set count [expr $count-1]
-                            }
-                            -re "(\[你|妳]?.*\[傷害|格開|但是沒中|從旁邊擦過|用盾擋開])|(\[但是沒有傷到要害|但是看起來並不要緊|流了許多鮮血|有生命危險|奄奄一息了]。 \\))" {
-                                puts "Fighting with \[$target]."
-                                refreshHPMP
-                                # 戰鬥中補血
-                                set needHeal [expr $hp < $heal_hp_limit ]
-
-                                if {$needHeal} {
-                                    puts "Need healing in fighting."
-                                    cast "heal"
-                                }
-                                exp_continue
-                            }
-                            default {
-                                if {$retry > 0} {
-                                    puts "\[$target] is dead.(timeout)"
-                                    handleCorpse
-                                    set count [expr $count-1]
-                                } else {
-                                    set retry [expr $retry+1]
-                                    exp_continue
-                                }  
-                            }
-                        }
-                    }
-                }
-                afterFight
-            } else {
-                rest $max_hp_limit
-            }         
-        } else { return }       
-    }    
-}
 
 #=====================================================================
 # Config
@@ -143,6 +90,7 @@ expect "請輸入密碼"
 send "$password\r"
 
 while {1} {
+    set freeze 0
     recall
 
     go "n" 1

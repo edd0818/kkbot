@@ -9,73 +9,15 @@ if {[dict get $options -code] != 0} {
     exit 1
 }
 
+proc beforeFight {target} {
 
-proc kill { target count } {
-    global freeze
-    if {$freeze} {return}
+}
 
-    global min_hp_limit
-    global max_hp_limit
-    global heal_hp_limit
+proc onFight {target} {
+    refreshHPMP
+}
 
-    global hp
-    global mp
-
-    while {$count > 0 } {
-        set hasTarget [lookfor "$target"]
-        if { $hasTarget } {
-            refreshHPMP
-            set canFight [expr $hp > $min_hp_limit]
-            if {$canFight} {
-                #prepareToFight
-                sleep 2
-                send "kill $target\r"
-                expect {
-                    "這裡沒有這個人" {
-                        puts "No body named \[$target]"
-                        return
-                    }
-                    -re "(你喝道 :「可惡的)|(對 !! 加油 !! 加油 !!)" {
-                        set retry 0
-                        expect {
-                            -re "(你得到.*點經驗)" {
-                                puts "\[$target] is dead."
-                                handleCorpse
-                                set count [expr $count-1]
-                            }
-                            -re "(\[你|妳]?.*\[傷害|格開|但是沒中|從旁邊擦過|用盾擋開])|(\[但是沒有傷到要害|但是看起來並不要緊|流了許多鮮血|有生命危險|奄奄一息了]。 \\))" {
-                                puts "Fighting with \[$target]."
-                                refreshHPMP
-                                # 戰鬥中補血
-                                set needHeal [expr $hp < $heal_hp_limit ]
-
-                                if {$needHeal} {
-                                    puts "Need healing in fighting."
-                                    #cast "ch"
-                                }
-                                exp_continue
-                            }
-                            default {
-                                if {$retry > 0} {
-                                    puts "\[$target] is dead.(timeout)"
-                                    handleCorpse
-                                    set count [expr $count-1]
-                                } else {
-                                    set retry [expr $retry+1]
-                                    exp_continue
-                                }  
-                            }
-                        }
-                    }
-                }  
-                
-            } else {
-                rest $max_hp_limit
-            }
-            
-        } else { return }
-        
-    }
+proc afterFight {target} {
     
 }
 
@@ -124,7 +66,7 @@ while {1} {
     #kill "Adventurer" 2
     go "s" 1
     go "e" 1
-    kill "priest" 2
+    #kill "priest" 2
     #kill "adventurer" 1
     go "w" 1
     go "s" 3
@@ -136,7 +78,7 @@ while {1} {
     sellAll
     go "w" 1
     go "s" 2
-    kill "guard" 2
+    #kill "guard" 2
     #城門
     go "e" 1
     go "s" 2
@@ -147,7 +89,7 @@ while {1} {
     go "n" 1
     go "w" 2
     # 城門
-    kill "guard" 2
+    #kill "guard" 2
     go "n" 2
     go "e" 1
     sellAll
@@ -219,7 +161,7 @@ while {1} {
     go "s" 1
     #kill "adventurer" 1
     #kill "female" 1
-    kill "Cleric" 1
+    kill "cleric" 1
     go "n" 1
     go "e" 3
     go "u" 1
