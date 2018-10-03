@@ -153,6 +153,8 @@ proc sellAll {} {
         sleep 1
         send "sell all\r"
         puts "Inventory has been sold."
+        expect ">"
+        send "sc\r"
     }
 }
 
@@ -196,6 +198,9 @@ proc cast { magic {target ""} {interval 2} } {
         -re "(沒有聽見你的祈願)|(不理你)|(什麼事也沒發生)|(動作沒有完成)" {
             sleep $interval
             return 2
+        }
+        "已經" {
+        	return 0
         }
         default {
             return 0
