@@ -117,10 +117,14 @@ proc rest {max_hp_limit } {
 proc refreshHPMP {} {
     global hp
     global mp
+ #    puts "start- hp: $hp, mp: $hp"
+	# set hp [incr hp 1	]
+	# set mp [incr mp 1	]
+ #    puts "end- hp: $hp, mp: $hp"
 
     send "hp\r"
     expect {
-        -re "體力 :\[ ]*(\\d+)\/\[ ]*(\\d+)\r\n法力 :\[ ]*(\\d+)\/\[ ]*(\\d+)" {
+        -re "體力 :\[ ]*(\\d+)\/\[ ]*(\\d+).*法力 :\[ ]*(\\d+)\/\[ ]*(\\d+)" {
             set hp_c $expect_out(1,string)
             set hp_m $expect_out(2,string)
             set hp [expr (double($hp_c)/$hp_m)*100]
