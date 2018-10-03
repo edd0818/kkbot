@@ -1,89 +1,14 @@
 #!/usr/bin/expect -f
+package require Tcl 8.5
 
-proc recall {} {
-    sleep 1
-    expect ">" {
-        puts "Recalling"
-        send "recall\r"
-        expect {
-            "你正忙著呢" {
-                recall
-            }
-        }
-    }
-    sleep 5
+set include_file [lindex $argv 0]
+
+catch {source $include_file} result options
+if {[dict get $options -code] != 0} {
+    puts stderr "could not source $include_file: $result"
+    exit 1
 }
 
-proc go { direct steps} {
-    while {$steps > 0 } {
-        puts "going to \[$direct]"
-        send "$direct\r"
-        expect {
-            -re "(你的動作還沒有完成, 不能移動)|(你的指令下太快了)|(你試圖逃走)" {
-                sleep 1
-            }
-            -re "(你.*逃跑了)" {
-                recall
-                break
-            }
-             -re "(這裡明顯的出口是)|(這裡唯一的出口)" {
-                puts "arrive \[$direct]"
-                set steps [expr $steps-1];
-                sleep 0.5
-            }
-        }      
-    }
-}
-
-proc lookfor { target } {
-    sleep 1
-    puts "looking for \[$target]."
-    send "l $target\r"
-    expect {
-        -re "正處於" {
-            puts "\[$target] found."
-            return 1
-        }
-        "你要看什麼" {
-            puts "\[$target] not found."
-            return 0
-        }
-        default {
-            puts "\[$target] found."
-            return 1
-        }
-    }
-}
-
-proc sellAll {} {
-    expect ">" {
-        sleep 1
-        send "sell all\r"
-        puts "Inventory has been sold."
-        send "sc\r"
-    }
-
-}
-
-proc transport { kingdom } {
-    expect ">" {
-        send "pray mercy\r"
-    }
-    sleep 5
-}
-
-proc saveAllMoney {} {
-    sleep 1
-    send "sc\r"
-    expect -re "身上帶著 (\\d+) 枚金幣" {
-        set money $expect_out(1,string)
-        if {$money > 0} {
-            puts "Depositing $money in bank."
-            send "deposit $money\r"
-        }       
-    }
-
-}
 #=====================================================================
 # Mage
 #=====================================================================
@@ -103,6 +28,8 @@ set min_hp_limit 50
 set max_hp_limit 80
 # 戰鬥中低於血量，補血
 set heal_hp_limit 65
+# freeze 走錯路
+set freeze 0
 # 增益法術
 array set buffs [list "亞伯拉之盾" "magic_shield"]
 
@@ -125,6 +52,7 @@ while {1} {
     # sleep 2
     # set w [lindex [getHP_MP] 0]
     # puts $w
+    set freeze 0
 
     recall
     
@@ -144,7 +72,7 @@ while {1} {
     go "w" 1
     go "s" 3
     go "e" 1
-    saveAllMoney
+    #saveAllMoney
     go "w" 1
     go "s" 1
     go "e" 1
@@ -220,11 +148,13 @@ while {1} {
     go "n" 2
     go "s" 5
     #主殿
-    # go "s" 2
-    # go "e" 1
-    # kill "waitress" 1
-    # go "w" 1
-    # go "n" 2
+    go "s" 1
+    #kill "osouf" 1
+    pickup
+    go "s" 1
+    #kill "fighter" 1
+    pickup
+    go "n" 2
     go "e" 2
     go "n" 1
     sellAll
@@ -232,7 +162,10 @@ while {1} {
     #kill "clerk" 1
     pickup
     sellAll
-    go "s" 2
+    go "s" 1
+    # kill "traveller" 1
+    pickup
+    go "s" 1
     #kill "adventurer" 1
     #kill "female" 1
     #kill "Cleric" 1
@@ -256,6 +189,10 @@ while {1} {
     pickup
     go "n" 1
     #kill "child" 2
+    pickup
+    go "s" 2
+    go "e" 2
+    # kill "man" 1
     pickup
 
     sleep 1

@@ -1,86 +1,12 @@
 #!/usr/bin/expect -f
+package require Tcl 8.5
 
-proc recall {} {
-    sleep 1
-    expect ">" {
-        puts "Recalling"
-        send "recall\r"
-        expect {
-            "你正忙著呢" {
-                recall
-            }
-        }
-    }
-    sleep 5
-}
+set include_file [lindex $argv 0]
 
-proc go { direct steps} {
-    while {$steps > 0 } {
-        puts "going to \[$direct]"
-        send "$direct\r"
-        expect {
-            -re "(你的動作還沒有完成, 不能移動)|(你的指令下太快了)|(你試圖逃走)" {
-                sleep 1
-            }
-            -re "(你.*逃跑了)" {
-                recall
-                break
-            }
-             -re "(這裡明顯的出口是)|(這裡唯一的出口)" {
-                puts "arrive \[$direct]"
-                set steps [expr $steps-1];
-                sleep 0.5
-            }
-        }      
-    }
-}
-
-proc lookfor { target } {
-    sleep 1
-    puts "looking for \[$target]."
-    send "l $target\r"
-    expect {
-        -re "正處於" {
-            puts "\[$target] found."
-            return 1
-        }
-        "你要看什麼" {
-            puts "\[$target] not found."
-            return 0
-        }
-        default {
-            puts "\[$target] found."
-            return 1
-        }
-    }
-}
-
-proc isDead { target } {
-    puts "is \[$target] dead?"
-    sleep 1
-    send "l corpse\r"
-    expect {
-        -re "($target).*\\)的屍體" {
-            puts "\[$target] is dead."
-            return 1
-        }
-        "你要看什麼" {
-            puts "\[$target] is alive."
-            return 0
-        }
-        default {
-            puts "\[$target] is alive."
-            return 0
-        }
-    }       
-}
-
-proc handleCorpse {} {
-    puts "Get all from corpse."
-    sleep 1
-    send "gc\r"
-    # expect ">"
-    # send "pa\r"
+catch {source $include_file} result options
+if {[dict get $options -code] != 0} {
+    puts stderr "could not source $include_file: $result"
+    exit 1
 }
 
 proc beforeFight {} {
@@ -96,6 +22,9 @@ proc beforeFight {} {
 }
 
 proc kill { target count } {
+    global freeze
+    if {$freeze} {return}
+
     global min_hp_limit
     global max_hp_limit
     global heal_hp_limit
@@ -119,6 +48,7 @@ proc kill { target count } {
                         return
                     }
                     -re "(你喝道 :「可惡的)|(對 !! 加油 !! 加油 !!)" {
+                        set retry 0
                         expect {
                             -re "(你得到.*點經驗)" {
                                 puts "\[$target] is dead."
@@ -137,9 +67,14 @@ proc kill { target count } {
                                 exp_continue
                             }
                             default {
-                                puts "\[$target] is dead."
-                                handleCorpse
-                                set count [expr $count-1]
+                                if {$retry > 0} {
+                                    puts "\[$target] is dead.(timeout)"
+                                    handleCorpse
+                                    set count [expr $count-1]
+                                } else {
+                                    set retry [expr $retry+1]
+                                    exp_continue
+                                }  
                             }
                         }
                     }
@@ -155,165 +90,24 @@ proc kill { target count } {
     
 }
 
-proc rest {max_hp_limit } {
-    global hp 
-    refreshHPMP
-
-    while {$hp < $max_hp_limit} {
-        refreshHPMP        
-        sleep 1
-        #cast "ch"
-        puts "Resting, HP: \[$hp%]."
-        sleep 10
-    }
-}
-
-proc refreshHPMP {} {
-    global hp
-    global mp
-
-    send "hp\r"
-    expect {
-        -re "體力 :\[ ]*(\\d+)\/\[ ]*(\\d+)\r\n法力 :\[ ]*(\\d+)\/\[ ]*(\\d+)" {
-            set hp_c $expect_out(1,string)
-            set hp_m $expect_out(2,string)
-            set hp [expr (double($hp_c)/$hp_m)*100]
-            puts "HP: $hp%"
-            set mp_c $expect_out(3,string)
-            set mp_m $expect_out(4,string)
-            set mp [expr (double($mp_c)/$mp_m)*100]
-            puts "MP: $mp%"          
-        }   
-    }
-}
-
-proc cast { magic {interval 2} } {
-    puts "Casting \[$magic]"
-    send "cast $magic\r"
-    
-    expect {
-        "法力不足" {
-            puts "Failed to cast \[$magic], Out of mana."
-            sleep 0.5
-            return 1
-        }
-        -re "(沒有聽見你的祈願)|(不理你)|(什麼事也沒發生)|(動作沒有完成)" {
-            sleep $interval
-            return 2
-        }
-        -re "(已經)" {
-            return 0
-        }
-        default {
-            return 0
-        }
-    }
-    
-}
-
-proc keepCast { magic } {
-    #puts "keepCast: $magic"
-    set result [cast $magic]
-    while {$result > 1} {
-        set result [cast $magic]
-    }
-}
-
-proc  buffAll {} {
-    puts "Checking buffs."
-
-    global buffs
-    set status [getBodyStatus]
-    foreach {k v} [array get buffs *] {
-        
-      set buffed [lsearch $status $k]
-      if {$buffed >= 0} {
-        puts "\[$k] buffed."
-      } else {
-        puts "Praying \[$k] buff"
-        keepCast $v
-        puts "\[$k] buffed."
-      }
-    }
-}
-
-proc getBodyStatus {} {   
-    set dummy {}
-    expect {
-        ">" { 
-            send "sc\r"
-            expect -re "身體狀況 :(.*)" {
-                set str [regsub -all {\s+} $expect_out(1,string) ""]
-                set c_arr [split $str ,]
-                return $c_arr
-            }
-        }
-    }
-    return $dummy
-}
-
-proc sellAll {} {
-    expect ">" {
-        sleep 1
-        send "sell all\r"
-        puts "Inventory has been sold."
-    }
-}
-
-proc transport { kingdom } {
-    expect ">" {
-        send "pray mercy\r"
-    }
-    sleep 5
-}
-
-proc saveAllMoney {} {
-    sleep 1
-    send "sc\r"
-    expect -re "身上帶著 (\\d+) 枚金幣" {
-        set money $expect_out(1,string)
-        if {$money > 0} {
-            puts "Depositing $money in bank."
-            send "deposit $money\r"
-        }       
-    } 
-}
-#=====================================================================
-# Mage
-#=====================================================================
-proc meditate {} {
-    puts "Meditating..."
-    sleep 1
-    send "meditate\r"
-    expect {
-        "不能冥思" {
-            puts "Not ready to meditate." 
-        }
-        -re "(開始冥思)|(你看見)|(你覺得)|(你聽到)|(驚醒)" {
-            exp_continue
-        }
-        "你從冥思中醒來" {
-            puts "done."
-        }
-    }
-}
-
-proc buffWeapon {} {
-    puts "Buff weapon."
-    sleep 1
-    keepCast "coating"  
-}
-
 #=====================================================================
 # Config
 #=====================================================================
 set timeout 3
+# user
+set user "klown"
+# pwd
+set password "a77818"
+# class 0=warrior , 1=cleric , 2=mage
+set clazz 2
 # 低於血量休息
 set min_hp_limit 50
 # 高於血量停止休息
 set max_hp_limit 80
 # 戰鬥中低於血量，補血
 set heal_hp_limit 65
+# freeze 走錯路
+set freeze 0
 # 增益法術
 array set buffs [list "亞伯拉之盾" "magic_shield"]
 
@@ -325,14 +119,15 @@ spawn telnet kk.muds.idv.tw 4000
 
 
 expect "new"
-send "klown\r"
+send "$user\r"
 
 expect "請輸入密碼"
-send "a77818\r"
+send "$password\r"
 
 
 
 while {1} {
+    set freeze 0
     recall
 
     go "n" 1
@@ -387,7 +182,7 @@ while {1} {
     go "n" 2
     go "w" 1
     go "s" 2
-    #kill "Adventurer" 2
+    kill "adventurer" 2
     go "e" 4
     go "s" 7
     go "e" 2
@@ -421,5 +216,5 @@ while {1} {
     send "save\r"
 }
 
-exit
+exit 0
   
