@@ -27,16 +27,19 @@ proc pickup {} {
 #=====================================================================
 # Config
 #=====================================================================
-set timeout 3
+set timeout 8
+# user
+set user "whouse"
+# pwd
+set password "a77818"
+# class 0=warrior , 1=cleric , 2=mage
+set clazz 0
 # 低於血量休息
 set min_hp_limit 50
 # 高於血量停止休息
 set max_hp_limit 80
 # 戰鬥中低於血量，補血
 set heal_hp_limit 65
-# 增益法術
-array set buffs [list "亞伯拉之盾" "magic_shield"]
-
 
 #=====================================================================
 #
@@ -45,10 +48,10 @@ spawn telnet kk.muds.idv.tw 4000
 
 
 expect "new"
-send "whouse\r"
+send "$user\r"
 
 expect "請輸入密碼"
-send "a77818\r"
+send "$password\r"
 
 
 
@@ -59,7 +62,11 @@ while {1} {
     set freeze 0
 
     recall
-    
+    # Cast all first
+    go "s" 3
+    castg "casi" "cast4"
+    go "n" 3
+    # Home
     go "n" 1
     go "e" 3
     #kill "monk" 1
@@ -109,7 +116,11 @@ while {1} {
 
     #======================
     recall
-
+    # Cast all first
+    go "s" 3
+    castg "casi" "cast4"
+    go "n" 3
+    #Home
     go "n" 1
     go "e" 4
     #kill "priest" 2

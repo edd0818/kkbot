@@ -58,6 +58,11 @@ while {1} {
     set freeze 0
     recall
 
+    # Cast all first
+    go "s" 3
+    castg "casi" "cast3"
+    go "n" 3
+    #Home
     go "n" 1
     go "e" 5
    

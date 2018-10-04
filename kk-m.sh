@@ -18,6 +18,10 @@ proc beforeFight {target} {
     global mp
 
     refreshHPMP
+
+    if {$mp > 40} {
+        cast "fireball" $target
+    }
 }
 
 proc onFight {target} {
@@ -27,7 +31,7 @@ proc onFight {target} {
     refreshHPMP
 
     if {$hp < 50} {
-        drink "potion"
+        #drink "potion"
     } 
 
 }
@@ -75,7 +79,7 @@ set max_hp_limit 80
 # 戰鬥中低於血量，補血
 set heal_hp_limit 65
 # 增益法術
-array set buffs [list "亞伯拉之盾" "magic_shield"]
+array set buffs [list "亞伯拉之盾" "magic_shield" "巨魔之力" "ogre_power"]
 
 
 #=====================================================================
@@ -95,11 +99,15 @@ send "$password\r"
 while {1} {
     set freeze 0
     recall
-
+    # Cast all first
+    go "s" 3
+    castg "casi" "cast3"
+    go "n" 3
+    #Home
     go "n" 1
     go "e" 1
     go "n" 1
-    buy "potion" 2 5
+    #buy "potion" 2 5
     go "s" 1
     go "e" 2
     #kill "monk" 1
@@ -145,7 +153,11 @@ while {1} {
 
     #============
     recall
-
+    # Cast all first
+    go "s" 3
+    castg "casi" "cast3"
+    go "n" 3
+    #Home
     go "n" 1
     go "e" 5
    

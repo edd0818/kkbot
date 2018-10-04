@@ -218,7 +218,7 @@ proc kill { target count } {
                                 handleCorpse
                                 set count [expr $count-1]
                             }
-                            -re "(\[你|妳]?.*\[傷害|格開|但是沒中|從旁邊擦過|用盾擋開])|(\[但是沒有傷到要害|但是看起來並不要緊|流了許多鮮血|血流不止|有生命危險|奄奄一息了]。 \\))" {
+                            -re "(\[你|妳]?.*\[傷害|格開|但是沒中|從旁邊擦過|用盾擋開])|(\[沒有受傷|但是沒有傷到要害|但是看起來並不要緊|流了許多鮮血|血流不止|有生命危險|奄奄一息了]。 \\))" {
                                 puts "Fighting with \[$target]."
 
                                 onFight $target
@@ -258,6 +258,56 @@ proc drink {item} {
     send "drink $item\r"
 }
 
+proc castg {name option} {
+    global user
+    set retry 0
+
+    sleep 1
+    puts "Casting ALL"
+    send "tell $name $option\r"
+    expect {
+        "現在不願聽你說話" {
+            puts "You're banned. fxxk!"
+        }
+        "沒有這個人" {
+            puts "No CASTG here."
+        }
+        "冥思中" {
+            puts "CASTG is not ready."
+        }
+        -re "\\((\[a-z]*) 正在使用中" {
+            set castee $expect_out(1,string)
+            set here [lookfor $castee]
+            if {$castee != $user && $here} {
+                puts "CASTG is occupied by \[$castee]."
+            } else {
+                send "l $name\r"
+                expect "沒有受傷" {
+                    send "tell $name reset\r" 
+                    expect "reset castg成功" {
+                        puts "Reset CASTG."
+                        sleep 0.5
+                        castg $name $option
+                    } 
+                }
+            }
+        }
+        -re "($user) CAST模式.*已完成, CASTG關閉" {
+            puts "DONE."
+        }
+        -re "(喃喃唸道)|(高舉雙手)" {
+            exp_continue
+        }
+        default {
+            if {$retry < 5} {
+                set retry [expr $retry+1]
+                exp_continue
+            } else {
+                puts "Retry failed."
+            }        
+        }
+    }
+}
 #=====================================================================
 # Cleric & Mage
 #=====================================================================
