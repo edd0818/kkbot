@@ -69,7 +69,7 @@ proc lookfor { target } {
     puts "looking for \[$target]."
     send "l $target\r"
     expect {
-        -re "正處於" {
+        -re "(沒有受傷)|(但是沒有傷到要害)|(但是看起來並不要緊)|(流了許多鮮血)|(血流不止)|(有生命危險)|(奄奄一息了)" {
             puts "\[$target] found."
             return 1
         }
@@ -86,14 +86,18 @@ proc lookfor { target } {
 
 proc handleCorpse {} {
 	global clazz
-    puts "Get all from corpse."
-    sleep 1
-    send "gc\r"
+    global user
+
+    if {$user != "klown"} {
+        puts "Get all from corpse."
+        sleep 1
+        send "gc\r"
+    }
 
     if {$clazz == 1} {
     	expect ">"
     	send "pa\r"
-    } 
+    }
 }
 
 proc rest {max_hp_limit } {
@@ -214,7 +218,7 @@ proc kill { target count } {
                                 handleCorpse
                                 set count [expr $count-1]
                             }
-                            -re "(\[你|妳]?.*\[傷害|格開|但是沒中|從旁邊擦過|用盾擋開])|(\[但是沒有傷到要害|但是看起來並不要緊|流了許多鮮血|有生命危險|奄奄一息了]。 \\))" {
+                            -re "(\[你|妳]?.*\[傷害|格開|但是沒中|從旁邊擦過|用盾擋開])|(\[但是沒有傷到要害|但是看起來並不要緊|流了許多鮮血|血流不止|有生命危險|奄奄一息了]。 \\))" {
                                 puts "Fighting with \[$target]."
 
                                 onFight $target
@@ -242,6 +246,18 @@ proc kill { target count } {
     }    
 }
 
+proc buy {item {id 1} {num 1}} {
+    sleep 1
+    puts "Buy $item *$num."
+    send "buy $num $item $id\r"
+}
+
+proc drink {item} {
+    sleep 1
+    puts "Drinking $item."
+    send "drink $item\r"
+}
+
 #=====================================================================
 # Cleric & Mage
 #=====================================================================
@@ -255,7 +271,7 @@ proc cast { magic {target ""} {interval 2} } {
     send "cast $magic on $target\r"
     
     expect {
-        "法力不足" {
+        -re "(法力不足)|(法力不夠)" {
             puts "Failed to cast \[$magic], Out of mana."
             sleep 0.5
             return 1
@@ -298,12 +314,6 @@ proc  buffAll {} {
         puts "\[$k] buffed."
       }
     }
-}
-
-proc buffWeapon {} {
-    puts "Buff weapon."
-    sleep 1
-    keepCast "coating"  
 }
 
 proc meditate {} {

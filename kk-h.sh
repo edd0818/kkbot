@@ -16,6 +16,12 @@ if {[dict get $options -code] != 0} {
 proc pickup {} {
     sleep 1
     send "get all from corpse\r"
+    sleep 0.3
+    send "get all from corpse 2\r"
+    sleep 0.3
+    send "get all from corpse 3\r"
+    sleep 0.3
+
 }
 
 #=====================================================================
@@ -39,7 +45,7 @@ spawn telnet kk.muds.idv.tw 4000
 
 
 expect "new"
-send "stealer\r"
+send "whouse\r"
 
 expect "請輸入密碼"
 send "a77818\r"
@@ -143,7 +149,10 @@ while {1} {
     go "n" 1
     #kill "boy" 1
     pickup
-    go "n" 2
+    go "n" 1
+    #kill "fighter" 1
+    pickup
+    go "n" 1
     go "s" 5
     #主殿
     go "s" 1
@@ -173,25 +182,28 @@ while {1} {
     #精靈塔
     go "e" 1
     sleep 2
-    go "e" 2
-    #kill "child" 2
-    pickup
-    go "e" 1
-    #kill "child" 2
-    pickup
-    go "e" 1
-    #kill "child" 2
-    pickup
-    go "e" 1
-    #kill "child" 2
-    pickup
+    go "e" 3
     go "n" 1
-    #kill "child" 2
+    #kill "lady" 3
     pickup
-    go "s" 2
+    go "e" 1
+    #kill "sailor" 2
+    pickup
+    go "e" 1
+    # kill "sailor" 2
+    pickup
+    go "s" 1
+    # kill "sailor" 2
+    # kill "child" 1
+    pickup
+    go "s" 1
+    # kill "sailor" 2
+    # kill "child" 2
+    pickup
     go "e" 2
     # kill "man" 1
     pickup
+
 
     sleep 1
     send "save\r"
