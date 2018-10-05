@@ -87,6 +87,7 @@ while {1} {
     #kill "man" 1
     #kill "girl" 1
     go "e" 1
+    kill "vender" 1
     # go "n" 1
     # kill "visitor" 1
     # kill "man" 1

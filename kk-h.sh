@@ -63,9 +63,9 @@ while {1} {
 
     recall
     # Cast all first
-    go "s" 3
-    castg "casi" "cast4"
-    go "n" 3
+    # go "s" 3
+    # castg "casi" "cast4"
+    # go "n" 3
     # Home
     go "n" 1
     go "e" 3
@@ -81,7 +81,12 @@ while {1} {
     # kill "adventurer" 1
     pickup
     go "w" 1
-    go "s" 3
+    go "s" 2
+    #Cast all first
+    go "e" 1
+    castg "cax" "cast4"
+    go "w" 1
+    go "s" 1
     go "e" 1
     #saveAllMoney
     go "w" 1
@@ -117,9 +122,9 @@ while {1} {
     #======================
     recall
     # Cast all first
-    go "s" 3
-    castg "casi" "cast4"
-    go "n" 3
+    # go "s" 3
+    # castg "casi" "cast4"
+    # go "n" 3
     #Home
     go "n" 1
     go "e" 4

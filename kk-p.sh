@@ -79,12 +79,12 @@ while {1} {
     go "w" 1
     go "s" 3
     go "e" 1
-    #saveAllMoney
+    saveAllMoney
     go "w" 1
     go "s" 1
     kill "dog" 1
     go "e" 1
-    #sellAll
+    sellAll
     go "w" 1
     go "s" 2
     #城門
@@ -96,7 +96,7 @@ while {1} {
     kill "deer" 4
     go "e" 2
     go "n" 2
-    #kill "buffalo" 3
+    kill "buffalo" 3
     go "e" 3
     go "n" 1
     #kill "horse" 4
@@ -126,7 +126,7 @@ while {1} {
     go "e" 4
     go "s" 7
     go "e" 2
-    # kill "horse" 4
+    #kill "horse" 4
     go "w" 2
     go "n" 7
     go "w" 4
@@ -143,7 +143,7 @@ while {1} {
     go "w" 1
     go "n" 2
     go "w" 1
-    # kill "guard" 2
+    #kill "guard" 2
     go "w" 1
     go "n" 1
     kill "frog" 3

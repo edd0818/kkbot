@@ -42,7 +42,7 @@ proc afterFight {target} {
 
     refreshHPMP
 
-    if {$hp > 95 && $mp < 90} {
+    if {$hp > 90 && $mp < 90} {
         meditate
     }
 }
